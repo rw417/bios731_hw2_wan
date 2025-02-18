@@ -1,0 +1,43 @@
+---
+title: "scratch"
+author: "Robert Wan"
+header-includes:
+  - \usepackage{amsmath}
+date: "2025-02-13"
+output:
+  pdf_document: default
+---
+
+## Context
+
+This assignment reinforces ideas in Module 2: Optimization. We focus specifically on implementing the Newton's method, EM, and MM algorithms.
+
+
+## Due date and submission
+
+Please submit (via Canvas) a PDF containing a link to the web address of the GitHub repo containing your work for this assignment; git commits after the due date will cause the assignment to be considered late. Due date is Wednesday, 2/19 at 10:00AM.
+
+
+
+
+## Problem 0 
+
+This “problem” focuses on structure of your submission, especially the use git and GitHub for reproducibility, R Projects to organize your work, R Markdown to write reproducible reports, relative paths to load data from local files, and reasonable naming structures for your files.
+
+To that end:
+
+* create a public GitHub repo + local R Project; I suggest naming this repo / directory bios731_hw2_YourLastName (e.g. bios731_hw2_wrobel for Julia)
+* Submit your whole project folder to GitHub 
+* Submit a PDF knitted from Rmd to Canvas. Your solutions to the problems here should be implemented in your .Rmd file, and your git commit history should reflect the process you used to solve these Problems.
+
+
+## Algorithms for logistic regression 
+
+
+Likelihood:
+$$
+\begin{aligned}
+\log(\frac{\pi_i}{1-\pi_i}) &= \beta_0 + \beta_1X_{1i} + \beta_2X_{2i} + \ldots + \beta_pX_{pi} = \sum_{j = 0}^p \beta_jX_{ji}, \text{where } X_{0i} = 1 \\
+\pi_i &= \frac{1}{1 + \exp(-\sum_{j = 0}^p \beta_jX_{ji})} \\
+\end{aligned}
+$$
