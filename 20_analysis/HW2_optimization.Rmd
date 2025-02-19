@@ -11,6 +11,8 @@ editor_options:
     wrap: 72
 ---
 
+GitHub Repo: https://github.com/rw417/bios731_hw2_wan
+
 ```{r, include=FALSE}
 
 library(tidyverse)
@@ -73,12 +75,16 @@ $$
 
 <br>
 
-Likelihood: $$
+Likelihood:
+
+We know that, $$
 \begin{aligned}
 \log(\frac{\pi_i}{1-\pi_i}) &= \beta_0 + \beta_1X_{1i} + \beta_2X_{2i} + \ldots + \beta_pX_{pi} = \sum_{j = 0}^p \beta_jX_{ji}, \text{where } X_{0i} = 1 \\
 \pi_i &= \frac{1}{1 + \exp(-\sum_{j = 0}^p \beta_jX_{ji})} \\
 \end{aligned}
 $$
+
+Thus,
 
 $$
 \begin{aligned}
@@ -206,11 +212,12 @@ $$
 \end{aligned}
 $$
 
-Note that:
-$$
+Note that: $$
 -\log(1+\exp(X_i^T \theta^{(k)}) + \frac{\exp(X_i^T\theta^{(k)})}{1+\exp(X_i^T\theta^{(k)})} \le 1,
-$$
-which does not depend on $\theta$. So while $g(\theta|\theta^{(k)})$ may be greater than the log-likelihood, its difference is constant w.r.t $\theta$. As such, $g(\theta|\theta^{(k)})$ still works as a minorizing function.
+$$ which does not depend on $\theta$. So while $g(\theta|\theta^{(k)})$
+may be greater than the log-likelihood, its difference is constant w.r.t
+$\theta$. As such, $g(\theta|\theta^{(k)})$ still works as a minorizing
+function.
 
 (C) Finally, prove that maximizing $g(\theta|\theta^{(k)})$ consists of
     solving the equation
@@ -270,6 +277,53 @@ each of the four methods, report:
 Make 2-3 plots or tables comparing your results, and summarize these
 findings in one paragraph.
 
+```{r, eval=FALSE}
+# Run this code to run the simulation
+source(here::here("20_analysis", "run_simulations.R"))
+```
+
+**Results Summary**
+```{r, echo=FALSE}
+library(knitr)
+
+source(here::here("10_source", "08_percentile_estimates.R"))
+
+# Define table dimensions
+n_rows <- 6 # Excluding header row
+n_cols <- 4 # Excluding row names
+
+# Initialize a data frame with row names
+table_data <- data.frame(matrix(NA, nrow = n_rows, ncol = n_cols))
+rownames(table_data) <- c("Beta_0", "Beta_0 95% CI", "Beta_1", "Beta_1 95% CI", "Iterations", "Computation Time")
+colnames(table_data) <- c("Newton", "MM", "GLM", "Optim")
+
+# Read in RDS file
+results <- readRDS(here::here("30_results", "bs_results.RDS"))
+
+# Populate the table with values using a loop
+for (i in 1:n_cols) {
+  # Calculate the estimates and confidence intervals
+  beta_0_est <- percentile_estimates(results[[i]][, 1], 1, 0.05)
+  table_data[1, i] <- signif(beta_0_est[1], 5)
+  table_data[2, i] <- paste0("(", signif(beta_0_est[3],5), ", ", signif(beta_0_est[4],5), ")")
+  
+  beta_1_est <- percentile_estimates(results[[i]][, 2], 0.3, 0.05)
+  table_data[3, i] <- signif(beta_1_est[1], 5)
+  table_data[4, i] <- paste0("(", signif(beta_1_est[3],5), ", ", signif(beta_1_est[4],5), ")")
+  
+  # Iterations
+  table_data[5, i] <- signif(mean(results[[i]][, 3]), 5)
+  
+  # Computation time
+  table_data[6, i] <- signif(mean(results[[i]][, 4]), 5)
+}
+
+# Print the table in RMarkdown format
+kable(table_data, caption = "Summary of Simulation Results")
+```
+
+We see that all four optimization methods produced very similar estimates. GLM converged fastest, taking only 4 iterations. However, Newton converged quicker than GLM despite taking one more iteration, presumably because the `glm()` function has extra overhead in order to be more flexible. While Optim took 9 iterations on average to converge, its computation time was the same as GLM. The MM method took the longest and never converged. This is because we used are optimizing a minorization function that perhaps is not optimal. For both Newton and MM, I used the an error of 1e-08 and a max iteration of 100.
+
 ## Problem 4: EM algorithm for censored exponential data
 
 This will be a continuation of the lab problem on EM for censored
@@ -296,7 +350,9 @@ Do the following:
 
 <br>
 
-In class, we treated the survival time of the censored subjects as missing, denoted as $z_i$, and $t_i = \delta_i y_i + (1-\delta_i)z_i)$. We derived the total data likelihood as
+In class, we treated the survival time of the censored subjects as
+missing, denoted as $z_i$, and $t_i = \delta_i y_i + (1-\delta_i)z_i)$.
+We derived the total data likelihood as
 
 $$\begin{aligned}
 p(y, t | \lambda) &= \prod_{i=1}^n  \lambda \exp\{-\lambda t\} \\
@@ -310,20 +366,19 @@ $$l(y, t | \lambda) = n \log\lambda - \lambda \sum_{i=1}^n \left[ \delta_i y_i +
 We derived the Q-function as
 
 $$Q(\lambda | \lambda^{(k)}) = n \log\lambda - \lambda \sum_{i=1}^n \left[ \delta_i y_i + (1-\delta_i)E[z_i | y_i, \lambda^{(k)}] \right] .$$
-**E-Step**
-The memory-less property of the exponential distribution gives us
+**E-Step** The memory-less property of the exponential distribution
+gives us
 
 $$E[z_i | y_i, \lambda^{(k)}] = E[z_i | z_i \ge y_i, \lambda^{(k)}] = y_i + \frac{1}{\lambda^{(k)}}.$$
 Thus, the Q-function becomes
 $$Q(\lambda | \lambda^{(k)}) = n \log\lambda - \lambda \sum_{i=1}^n \left[ \delta_i y_i + (1-\delta_i)\left(y_i + \frac{1}{\lambda^{(k)}}\right) \right] = n \log\lambda - \lambda \sum_{i=1}^n \left[y_i + \frac{1-\delta_i}{\lambda^{(k)}} \right] .$$
 
-**M-Step**
-The M-step is to maximize the Q-function. Taking the first derivative of the Q-function and setting it to 0 produces
+**M-Step** The M-step is to maximize the Q-function. Taking the first
+derivative of the Q-function and setting it to 0 produces
 $$\begin{aligned}
 \frac{\partial}{\partial \lambda} Q(\lambda | \lambda^{(k)}) &= \frac{n}{\lambda} - \sum_{i=1}^n \left[y_i + \frac{1-\delta_i}{\lambda^{(k)}} \right] = 0 \\
 \lambda^{(k+1)} &= \frac{n}{\sum_{i=1}^n \left[y_i + \frac{1-\delta_i}{\lambda^{(k)}} \right]}.
 \end{aligned}$$
-
 
 -   Implement your EM in R and fit it to the `veteran` dataset from the
     `survival` package.
@@ -337,6 +392,44 @@ $$\begin{aligned}
         function from the `survival` package. If you choose
         `dist = "weibull` and `shape = 1` as parameter arguments, this
         will provide exponential errors.
+        
+        
+```{r, echo=FALSE}
+# Source files we need
+source(here::here("10_source", "06_em.R"))
+source(here::here("10_source", "08_percentile_estimates.R"))
+source(here::here("10_source", "09_run_bootstrap_veteran.R"))
+
+# Run bootstrap on EM to get estimate and se
+bootstrap_em_results <- run_bootstrap_veteran(500)
+
+# Run AFT using survreg
+aft <- survreg(Surv(time, status) ~ 1, data=veteran, dist="exponential")
+
+# Put things in a table
+# Define table dimensions
+n_rows <- 2 # Excluding header row
+n_cols <- 2 # Excluding row names
+
+# Initialize a data frame with row names
+table_data <- data.frame(matrix(NA, nrow = n_rows, ncol = n_cols))
+rownames(table_data) <- c("Lambda", "Lambda 95% CI")
+colnames(table_data) <- c("EM", "Survreg")
+
+# Populate the table with values
+lambda_em <- percentile_estimates(bootstrap_em_results$em[, 1], 1, 0.05)
+table_data[1, 1] <- signif(lambda_em[1], 5)
+table_data[2, 1] <- paste0("(", signif(lambda_em[3],5), ", ", signif(lambda_em[4],5), ")")
+
+table_data[1, 2] <- signif(aft$coef, 5)
+table_data[2, 2] <- paste0("(", signif(confint(aft)[1],5), ", ", signif(confint(aft)[2],5), ")")
+
+# Print the table in RMarkdown format
+kable(table_data, caption = "Comparison of My EM Algo and Survfit")
+
+```
+
+The $\lambda$ I obtained using my EM algorithm is very close to the result provided by the `Survreg()` function, although its 95% confidence interval is slightly larger than that of `Survreg()`. To obtain the confidence interval for the EM algorithm, I took bootstrap samples 1,000 times. For the `Survreg()` function, I used the confidence interval provided by the function rather than opting for bootstrap. I monitored convergence of EM by monitoring the difference in the observed log-likelihood between iterations. 
 
 ## Extra credit (up to 10 points)! Expected vs. observed information
 
